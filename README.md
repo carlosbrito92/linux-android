@@ -24,20 +24,39 @@ Script de configuração automatizada para instalar e gerenciar um ambiente Linu
 ## Instalação
 
 1. Instale o [Termux](https://f-droid.org/pt_BR/packages/com.termux/) do F-Droid
-2. Abra o Termux e execute:
-
-```bash
-bash script-termux.sh
+2. Abra o Termux e dê permissões para acesso ao armazenamento do celular:
 ```
+termux-setup-storage
+```
+3. Desbloqueie o modo Desenvolvedor no seu aparelho
+4. Em 'Opções do Desenvolvedor' desabilite a opção 'Desativar restrições de processos filhos' (ou 'Disable child process restrictions')
+5. Instale o git:
+```
+apt install git
+```
+6. Clone este repositório:
+```
+git clone https://github.com/lucasaguiar-la/linux-android.git
+```
+7. Após execute:
+```
+# Acessa a pasta clonada
+cd linux-android
 
-3. Selecione o ambiente desktop desejado
-4. Aguarde a instalação ser concluída
-5. Rode o script:
+# Da permissões para executar o script
+chmod +X script-termux.sh
+
+# Executa o script de instalação
+./script-termux.sh
+```
+8. Selecione o ambiente desktop desejado
+9. Aguarde a instalação ser concluída
+10. Rode o script:
 ```
 ./start-linux.sh
 ```
-5. Instale o [Termux X11](https://github.com/termux/termux-x11/releases/tag/nightly) para acessar a interface gráfica
-6. Abra o Termux X11 e o provedor gráfico já estará funcionando
+11. Instale o [Termux X11](https://github.com/termux/termux-x11/releases/tag/nightly) para acessar a interface gráfica
+12. Abra o Termux X11 e o provedor gráfico já estará funcionando
 
 ## Detecção de Hardware
 
@@ -59,6 +78,13 @@ O script detecta automaticamente:
 - Use XFCE4 para melhor equilíbrio entre performance e funcionalidade
 - Dispositivos antigos: prefira LXQt
 - Dispositivos topo de linha: experimente KDE
+- Para executar automatizamente o `./start-linux.sh` toda vez que abrir o Termux, faça o seguinte:
+```
+nano ~/.bashrc
+
+# Cole o conteúdo abaixo:
+./start-linux.sh
+```
 
 ## Licença
 

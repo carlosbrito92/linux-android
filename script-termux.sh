@@ -26,14 +26,6 @@ GPU_VENDOR=$(getprop ro.hardware.egl 2>/dev/null || echo "")
 
 echo "Dispositivo: $DEVICE_BRAND"
 
-if [[ "$GPU_VENDOR" == *"adreno"* ]] || [[ "$DEVICE_BRAND" == *"samsung"* ]]; then
-    GPU_DRIVER="freedreno"
-    echo "GPU: Adreno (aceleração ativada)"
-else
-    GPU_DRIVER="zink_native"
-    echo "GPU: Genérica (modo compatibilidade)"
-fi
-
 # ============== SELEÇÃO DO DESKTOP ==============
 echo ""
 echo "Escolha o Desktop:"

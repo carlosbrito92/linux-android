@@ -1,6 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
 # Script Linux simplificado para Termux
+# Versão editada: Wine removido + logging nos passos criticos (4 e 5)
 
 # ============== CONFIGURAÇÃO BÁSICA ==============
 DE_CHOICE="1"
@@ -10,11 +11,20 @@ GPU_DRIVER=""
 # ============== FUNÇÕES SIMPLIFICADAS ==============
 print_step() {
     echo "[$1/$2] $3"
-} 
+}
 
 install_pkg() {
     echo "  -> Instalando $1..."
     apt-get install -y -q $1 > /dev/null 2>&1
+}
+
+# install_pkg_verbose: mostra a saida real (usado nos passos que mais falham)
+install_pkg_verbose() {
+    echo "  -> Instalando $1 (modo verbose)..."
+    apt-get install -y $1
+    if [ $? -ne 0 ]; then
+        echo "  [!] ATENCAO: falha ao instalar '$1'. Veja o erro acima."
+    fi
 }
 
 # ============== DETECÇÃO DO DISPOSITIVO ==============
@@ -44,8 +54,9 @@ case $DE_INPUT in
 esac
 echo "Selecionado: $DE_NAME"
 
-# ============== INSTALAÇÃO (11 PASSOS) ==============
-TOTAL=11
+# ============== INSTALAÇÃO (10 PASSOS) ==============
+# Wine removido: total caiu de 11 para 10 passos
+TOTAL=10
 CURRENT=0
 
 # Passo 1
@@ -61,18 +72,22 @@ apt-get install -y -q x11-repo tur-repo > /dev/null 2>&1
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando servidor gráfico"
 apt-get install -y -q termux-x11-nightly xorg-xrandr > /dev/null 2>&1
 
-# Passo 4
+# Passo 4 (VERBOSE - falha aqui é comum)
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando $DE_NAME"
 case $DE_INPUT in
-    1) install_pkg "xfce4 xfce4-terminal xfce4-whiskermenu-plugin plank-reloaded thunar mousepad";;
-    2) install_pkg "lxqt qterminal pcmanfm-qt featherpad";;
-    3) install_pkg "mate mate-tweak plank-reloaded mate-terminal";;
-    4) install_pkg "plasma-desktop konsole dolphin";;
+    1) install_pkg_verbose "xfce4 xfce4-terminal xfce4-whiskermenu-plugin plank-reloaded thunar mousepad";;
+    2) install_pkg_verbose "lxqt qterminal pcmanfm-qt featherpad";;
+    3) install_pkg_verbose "mate mate-tweak plank-reloaded mate-terminal";;
+    4) install_pkg_verbose "plasma-desktop konsole dolphin";;
 esac
 
-# Passo 5
+# Passo 5 (VERBOSE - driver grafico, ponto critico no Mali)
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando drivers GPU"
-apt-get install -y -q mesa-zink vulkan-loader-android > /dev/null 2>&1
+echo "  -> Instalando mesa-zink e vulkan-loader-android..."
+apt-get install -y mesa-zink vulkan-loader-android
+if [ $? -ne 0 ]; then
+    echo "  [!] ATENCAO: falha ao instalar drivers GPU. Veja o erro acima."
+fi
 [ "$GPU_DRIVER" == "freedreno" ] && apt-get install -y -q mesa-vulkan-icd-freedreno > /dev/null 2>&1
 
 # Passo 6
@@ -88,13 +103,7 @@ CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Python"
 apt-get install -y -q python > /dev/null 2>&1
 pip install flask > /dev/null 2>&1
 
-# Passo 9
-CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Wine"
-apt-get remove -y wine-stable > /dev/null 2>&1
-apt-get install -y -q hangover-wine hangover-wowbox64 > /dev/null 2>&1
-ln -sf /data/data/com.termux/files/usr/opt/hangover-wine/bin/wine /data/data/com.termux/files/usr/bin/wine 2>/dev/null
-
-# Passo 10
+# Passo 9 (antes era 10) - Criando scripts
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Criando scripts"
 cat > ~/start-linux.sh << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
@@ -103,6 +112,9 @@ pulseaudio --kill 2>/dev/null
 sleep 1
 pulseaudio --start --exit-idle-time=-1
 export PULSE_SERVER=127.0.0.1
+# Forca renderizacao via Zink (OpenGL sobre Vulkan) - ideal para GPU Mali
+export MESA_LOADER_DRIVER_OVERRIDE=zink
+export GALLIUM_DRIVER=zink
 termux-x11 :0 -ac &
 sleep 2
 export DISPLAY=:0
@@ -128,7 +140,7 @@ echo "Desktop finalizado"
 EOF
 chmod +x ~/stop-linux.sh
 
-# Passo 11
+# Passo 10 (antes era 11) - Criando atalhos
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Criando atalhos"
 mkdir -p ~/Desktop
 cat > ~/Desktop/Firefox.desktop << 'EOF'
